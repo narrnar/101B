@@ -1,0 +1,52 @@
+---
+title: "101b_project"
+author: "Daren Sathasivam"
+date: "2024-05-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# From stackexchange
+library(formatR)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+# Load packages needed:
+```{r}
+library(ggplot2)
+library(readxl)
+```
+
+
+# Read in Data(make sure working directory is correct):
+```{r}
+data <- read_excel("project.xlsx")
+```
+
+# Create Model:
+```{r}
+# Define response variable, treatments, and blocks
+response <- data$`Change in Blood Adrenaline Levels`
+treatments <- as.factor(data$`Time Jumped (sec)`) 
+blocks <- data$`Participant Name`
+
+
+# Simple model
+model1 <- with(data, aov(response ~ treatments + blocks))
+summary(model1)
+```
+
+# Plot Model:
+```{r}
+# Post-hoc analysis
+tukey1 <- TukeyHSD(model, "Jumping Time(seconds)")
+print(tukey1)
+
+ggplot(data, aes(x=treatments, y=response, group=blocks)) +
+    geom_line(aes(color=blocks)) +  # Line plot if repeated measures
+    geom_point(size=3, aes(shape=blocks, color=blocks)) +  # Points to show individual measurements
+    labs(title="Change in Blood Adrenaline Levels by Jumping Time", x="Jumping Time (sec)", y="Change in Adrenaline Levels") +
+    theme_minimal(
+```
+
+
