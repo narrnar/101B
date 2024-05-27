@@ -1,0 +1,20 @@
+---
+title: "101B_hw01_Daren_Sathasivam"
+author: "Daren Sathasivam"
+date: "2024-04-08"
+output: pdf_document
+---
+
+# 1
+In class activity:
+- a. 
+- b
+- c.
+- d.
+- e.
+
+# 2: Problem 2.25
+
+# 3: Problem 2.2 - skip(f) and (g)
+
+# 4: Problem 2.30
