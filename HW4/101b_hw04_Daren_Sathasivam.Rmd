@@ -1,0 +1,354 @@
+---
+title: "101B_hw04"
+author: "Daren Sathasivam"
+date: "2024-05-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# From stackexchange
+library(formatR)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+```{r, include=FALSE}
+# Discussion
+
+# Interaction plot
+# install.packages("phia")
+# library(phia)
+# interactionplotMeans(model)
+# plot
+
+# library(FrF2)
+# cubePlot(y, A, B, C)
+```
+
+
+# Problem 1: 5.20
+
+## a. Analyze the data and draw conclusions. Use $\alpha = 0.05$
+```{r}
+# Data
+# cooking_time <- c(rep(3, 18), rep(4, 18))
+# pressure <- rep(rep(c(400, 500, 650), each = 2), 6)
+# hardwood <- rep(rep(c(2, 4, 8), each = 6), 2)
+# 
+# strength <- c(196.6, 196.0, 197.7, 196.0, 199.8, 199.4,
+#               198.5, 197.2, 196.0, 196.9, 198.4, 197.6,
+#               197.5, 196.6, 195.6, 196.2, 197.4, 198.1,
+#               198.4, 198.6, 199.6, 200.4, 200.6, 200.9,
+#               197.5, 198.1, 198.7, 198.0, 199.6, 199.0,
+#               197.6, 198.4, 197.0, 197.8, 198.5, 199.8)
+# 
+# paper_data <- data.frame(cooking_time, pressure, hardwood, strength)
+# paper_data
+
+time <- rep(c(rep(3, 6), rep(4, 6)), 3)
+pressure <- rep(c(400, 500, 650), 12)
+hardwood <- c(rep(2, 12), rep(4, 12), rep(8, 12))
+strength <- c(196.6, 197.7, 199.8, 196.0, 196.0, 199.4, 198.4, 199.6, 200.6, 198.6, 200.4, 200.9, 198.5, 196.0, 198.4, 197.2, 196.9, 197.6, 197.5, 198.7, 199.6, 198.1, 198.0, 199.0, 197.5, 195.6, 197.4, 196.6, 196.2, 198.1, 197.6, 197.0, 198.5, 198.4, 197.8, 199.8)
+# data1 <- data.frame(strength, time, pressure, hardwood)
+# data1
+
+# Model:
+# ANOVA Model
+model1 <- aov(strength ~ factor(time) * factor(hardwood) * factor(pressure))
+summary(model1)
+```
+
+- Given the ANOVA table, we can observe that all three factors, hardwood concentration, pressure, and cooking time, all have statistically significant p-values indicating that all affect paper strength. The most significant of the three being the time factor.
+
+## b. Prepare appropriate residual plots and comment on the model's adequacy.
+```{r}
+par(mfrow = c(2, 2))
+plot(model1)
+
+# plot(model1$fitted.values, model1$residuals)
+# qqnorm(model1$residuals); qqline(model1$residuals)
+```
+
+- The residuals vs fitted plot displays a relatively horizontal line with no observable pattern, indicating that the model does not violate the homscedasticity assumption. The normal Q-Q plot displays a many points along the line, indicating that the model does not violate the assumption of normality. The Scale-Location plot displays a relatively horizontal line with evenly scattered points, suggesting that the model does not violate the homoscedasticity assumption. Lastly, the residuals vs leverage plot does not observe many outliers in the data and remains relatively consistent. 
+
+## c. Under what set of conditions would you operate this process? Why?
+```{r}
+library(phia)
+
+mip1 <- interactionMeans(model1)
+plot(mip1)
+```
+
+
+- In operating this process, the ideal conditions would involve selecting the combination of the three factors, hardwood concentration, pressure, and cooking time, that maximizes the paper strength while remaining practical in terms of time and cost. While statistically, the highest level of cooking time (4.0 hours) and the lowest level of hardwood concentration (2%) yielded the strongest paper, practical considerations suggest optimizing for cost and production speed. Thus, a recommended setting might be a cooking time of 3 hours and a hardwood concentration of 2% at a pressure of 650 psi. This approach maximizes output as more paper can be manufactured with less time being spent cooking and less of the hardwood concentration ingredient being utilized.
+
+
+# Problem 2: 5.37
+
+## Reconsider the three‐factor factorial experiment in Problem 5.20. Suppose that this experiment had been conducted in two blocks, with each replicate a block. Assume that the observations in the data table are given in order, that is, the first observation in each cell comes from the first replicate, and so on. Reanalyze the data as a factorial experiment in blocks and estimate the variance component for blocks. Does it appear that blocking was useful in this experiment?
+```{r}
+# Create blocks
+blocks <- rep(c(rep(1, 3), rep(2, 3)), 6)
+
+# Model:
+model1_blocks <- aov(strength ~ factor(time) * factor(hardwood) * factor(pressure) * factor(blocks))
+
+summary(model1_blocks)
+```
+
+- Given that the introduction of blocks did not greatly alter the ANOVA table, it appears that blocking was not useful in reducing unexplained variability in this particular experiment. This may indicate that either the blocks were not efficient in capturing the sources of variation that differ between the replicates or that the experiment is well controlled in respects to the different factors. 
+
+# Problem 3: 6.11
+
+```{r, include=FALSE}
+# Discussion
+library(FrF2)
+A2 <- rep(c(-1, 1), 16)
+B2 <- rep(c(-1, -1, 1, 1), 8)
+C2 <- rep(c(-1, -1, -1, -1, 1, 1, 1, 1), 4)
+D2 <- rep(c(rep(-1, 8), rep(1, 8)), 2)
+Yield2 <- c(90, 74, 81, 83, 77, 81, 88, 73, 98, 72, 87, 85, 99, 79, 87, 80, 93, 78, 85, 80, 78, 80, 82, 70, 95, 76, 83, 86, 90, 75, 84, 80)
+
+effects1_2 <- 2*coef(lm(Yield2~A2*B2*C2*D2))[-1]
+# effects1_2
+model2_disc <- aov(Yield2 ~ A2*B2*C2*D2)
+# summary(model2_disc)
+regmodel2 <- lm(Yield2 ~ A2*B2*C2*D2)
+summary(regmodel2)
+cubePlot(Yield2, A2, B2, C2)
+cubePlot(Yield2, A2, B2, D2)
+```
+
+
+## a. Estimate the factor effects
+```{r}
+# Data:
+treatment_combination <- c("(1)", "a", "b", "ab", "c", "ac", "bc", "abc", "d", "ad", "bd", "abd", "cd", "acd", "bcd", "abcd")
+replicate_1 <- c(90, 74, 81, 83, 77, 81, 88, 73, 98, 72, 87, 85, 99, 79, 87, 80)
+replicate_2 <- c(93, 78, 85, 80, 78, 80, 82, 70, 95, 76, 83, 86, 90, 75, 84, 80)
+treatment_combination <- rep(treatment_combination, each = 2) 
+replicate_id <- rep(c("I", "II"), each = 1)  
+Yield <- c(rbind(replicate_1, replicate_2))
+
+chemical_process_data <- data.frame(Treatment_Combination = treatment_combination, Replicate = replicate_id, Yield = Yield)
+chemical_process_data$A <- ifelse(grepl("a", chemical_process_data$Treatment_Combination), 1, -1)
+chemical_process_data$B <- ifelse(grepl("b", chemical_process_data$Treatment_Combination), 1, -1)
+chemical_process_data$C <- ifelse(grepl("c", chemical_process_data$Treatment_Combination), 1, -1)
+chemical_process_data$D <- ifelse(grepl("d", chemical_process_data$Treatment_Combination), 1, -1)
+
+# chemical_process_data
+
+
+# Model:
+model2 <- lm(Yield ~ A*B*C*D, data = chemical_process_data)
+# summary(model2)
+
+# Effects:
+effects1 <- 2 * coef(model2)
+effects1
+```
+
+## b. Prepare an analysis of variance table and determine which factors are important in explaining yield.
+```{r}
+anova2 <- anova(model2)
+anova2
+```
+
+- From the ANOVA table, we can observe that factor A and D are the most significant individual contributors in explaining yield. Additionally, the combinations AB, ABC, and ABD can be observed as significant interactions which have a statistically significant influence on yield. 
+
+## c. Write down a regression model for predicting yield, assuming that all four factors were varied over the range from -1 to +1(in coded units).
+- $Yield = \beta_0 + \beta_1A + \beta_2B + \beta_3C + \beta_4D + \beta_{12}AB + \beta_{13}AC + \beta_{14}AD + \beta_{23}BC + \beta_{24}BD + \beta_{34}CD + \beta_{123}ABC + \beta_{124}ABD + \beta_{134}ACD + \beta_{234}BCD + \beta_{1234}ABCD + \epsilon$
+```{r}
+regmodel <- lm(Yield ~ A*B*C*D, data = chemical_process_data)
+summary(regmodel)
+```
+
+
+## d. Plot the residuals versus the predicted yield and on a normal probability scale. Does the residual analysis appear satisfactory?
+```{r}
+par(mfrow = c(1, 2))
+
+# Residuals vs. Predicted Yield
+plot(model2$fitted.values, model2$residuals)
+abline(h = 0, color = "red", lty = 2)
+# Normal Probability Plot of Residuals
+qqnorm(model2$residuals); qqline(model2$residuals)
+```
+
+- The residuals vs predicted plot displays a random scatter around the horizontal line. This indicates that the model has constant variance(homoscedasticity). The normal Q-Q plot shows displays the residuals following the line but has slightly heavier tails, indicating that the residuals are more than likely to be normally distributed but have some weight on either end of the distribution.
+
+## e. Two three‐factor interactions, $ABC$ and $ABD$, apparently have large effects. Draw a cube plot in the factors $A$, $B$, and $C$ with the average yields shown at each corner. Repeat using the factors $A$, $B$,and $D$. Do these two plots aid in data interpretation? Where would you recommend that the process be run with respect to the four variables?
+
+```{r}
+# from rdrr.io
+# install.packages("FrF2") 
+library(FrF2)
+
+A <- chemical_process_data$A
+B <- chemical_process_data$B
+C <- chemical_process_data$C
+D <- chemical_process_data$D
+
+cubePlot(Yield, A, B, C)
+cubePlot(Yield, A, B, D)
+```
+
+- These two cube plots aid in data interpretation as it displays the interaction between the different factors. It is helpful as identifying which combinations of factors leading to better or worse outcomes is easily observed. Through these interaction cube plots, it is observed that the combination of ABD is the optimal factor combination to run the experiment as the value is 82.75 and the value for ABC is 75.75. 
+
+
+# Problem 4: 6.22
+
+```{r, include = FALSE}
+# Discussion
+A4 <- rep(c(-1, 1), 8)
+B4 <- rep(c(-1, -1, 1, 1), 4)
+C4 <- rep(c(-1, -1, -1, -1, 1, 1, 1, 1), 2)
+response4 <- c(50, 44, 46, 42, 49, 48, 47, 56, 54, 42, 48, 43, 46, 45, 48, 54)
+
+model3_2 <- aov(response4 ~ factor(A4) * factor(B4) * factor(C4))
+summary(model3_2)
+
+par(mfrow = c(1, 2))
+plot(model3_2$fitted.values, model3_2$residuals)
+qqnorm(model3_2$residuals); qqline(model3_2$residuals)
+
+mip2_2 <- interactionMeans(model3_2)
+plot(mip2_2)
+```
+
+
+## a. Analyze the data from this experiment. Which factors significantly affect the customer response rate?
+```{r}
+# Data
+treatment_combination <- rep(c("(1)", "a", "b", "ab", "c", "ac", "bc", "abc"), each = 2)
+replicate_id <- rep(c("I", "II"), each = 1)
+orders <- c(50, 54, 44, 42, 46, 48, 42, 43, 49, 46, 48, 45, 47, 48, 56, 54)
+mail_data <- data.frame(Treatment_Combination = treatment_combination, Replicate = replicate_id, Orders = orders)
+
+mail_data$A <- ifelse(grepl("a", mail_data$Treatment_Combination), 1, -1)
+mail_data$B <- ifelse(grepl("b", mail_data$Treatment_Combination), 1, -1)
+mail_data$C <- ifelse(grepl("c", mail_data$Treatment_Combination), 1, -1)
+mail_data
+
+# Model
+model3 <- aov(Orders ~ factor(A)*factor(B)*factor(C), data = mail_data)
+summary(model3)
+
+# Effects
+effects2 <- coef(model3)
+effects2
+```
+
+- From the model summary, it can be observed that the most significant factors are C(Offered Price) and the combination of factors A(Type of Mail Used) and C(Offered Price) being a significant factor combination in customer response rate. However, the p-value of A(Mail Type) is greater than 0.05, which can indicate that it is not significant enough to reject the null hypothesis. 
+
+## b. Analyze the residuals from this experiment. Are there any indications of model inadequacy?
+```{r}
+par(mfrow = c(2, 2))
+plot(model3)
+```
+- Based on the residuals of the model, we can observe that the Normal Q-Q plot holds the normality assumption as the residual points follow the line. Additionally, the Residuals vs. Fitted Plot displays a relatively random scatter of points, indicating that the residuals maintain homoscedasticity. Therefore the residuals do not indicate model inadequacy. 
+
+## c. What would you recommend to the company? (Answer based on the interaction plot)
+```{r}
+mip2 <- interactionMeans(model3)
+plot(mip2)
+```
+
+
+- I would recommend the company to prioritize their pricing strategy as the factor C(Offered Price) had the most significant impact on the response rate. Additionally, they may also work on their mailing methods as the combination of A(Mail Type) and C(Offered Price) also has shown significant effect on the response rate. Overall, I would highly recommend focusing on the pricing strategy of their products and maybe utilize online advertisements rather than using physical mail as it may be more costly. 
+
+
+# Problem 5: 6.35
+```{r, include = FALSE}
+# Discussion
+A <- rep(c(-1, 1), 16)
+B <- rep(c(-1, -1, 1, 1), 8)
+C <- rep(c(-1, -1, -1, -1, 1, 1, 1, 1), 4)
+D <- rep(c(rep(-1, 8), rep(1, 8)), 2)
+E <- c(rep(-1, 16), rep(1, 16))
+response <- c(8.11, 5.56, 5.77, 5.82, 9.17, 7.80, 3.23, 5.69, 8.82, 14.23, 9.20, 8.94, 8.68, 11.49, 6.25, 9.12, 7.93, 5.00, 7.47, 12, 9.86, 3.65, 6.4, 11.61, 12.43, 17.55, 8.87, 25.38, 13.06, 18.85, 11.78, 26.05)
+
+model4_2 <- aov(response ~ factor(A) * factor(B) * factor(C) * factor(D) * factor(E))
+summary(model4_2)
+a <- data.frame(summary(model4_2)[[1]])[, 2, drop = FALSE]
+a$PercntSS <- round(a$Sum.Sq/sum(a$Sum.Sq), 3)
+a
+
+effects4_2 <- 2*coef(lm(response ~ A*B*C*D*E))[-1]
+qqnorm(effects4_2, plot.it=F)
+text(qqnorm(effects4_2)$x, qqnorm(effects4_2)$y, names(effects4_2), pos = 3)
+qqline(effects4_2)
+
+model4_3 <- aov(response ~ factor(A) * factor(B) * factor(D) * factor(E))
+summary(model4_3)
+
+cubePlot(response, A, D, E)
+```
+
+
+## a. Analyze the data from this experiment. Identify the significant factors and interactions.
+```{r}
+# Data
+# A <- rep(c(-1, 1), each = 1, times = 16)
+# B <- rep(c(-1, 1), each = 2, times = 8)  
+# C <- rep(c(-1, 1), each = 4, times = 4) 
+# D <- rep(c(-1, 1), each = 8, times = 2) 
+# E <- rep(c(-1, 1), each = 16, times = 1)
+
+y <- c(8.11, 5.56, 5.77, 5.82, 9.17, 7.80, 3.23, 5.69, 8.82, 14.23, 9.20, 8.94, 8.68, 11.49, 6.25, 9.12, 7.93, 5.00, 7.47, 12, 9.86, 3.65, 6.4, 11.61, 12.43, 17.55, 8.87, 25.38, 13.06, 18.85, 11.78, 26.05)
+treatment_combination <- c("(1)", "a", "b", "ab", "c", "ac", "bc", "abc", "d", "ad", "bd", "abd", "cd", "acd", "bcd", "abcd", "e", "ae", "be", "abe", "ce", "ace", "bce", "abce", "de", "ade", "bde", "abde", "cde", "acde", "bcde", "abcde")
+
+experiment_data <- data.frame(Treatment_Combination = treatment_combination, y = y)
+
+experiment_data$A <- ifelse(grepl("a", experiment_data$Treatment_Combination), 1, -1)
+experiment_data$B <- ifelse(grepl("b", experiment_data$Treatment_Combination), 1, -1)
+experiment_data$C <- ifelse(grepl("c", experiment_data$Treatment_Combination), 1, -1)
+experiment_data$D <- ifelse(grepl("d", experiment_data$Treatment_Combination), 1, -1)
+experiment_data$E <- ifelse(grepl("e", experiment_data$Treatment_Combination), 1, -1)
+
+experiment_data
+
+# Model(not A*B*C*D*E):
+model4 <- aov(y ~ factor(A) * factor(B) * factor(C) * factor(D) * factor(E), data = experiment_data)
+summary(model4)
+
+a <- data.frame(summary(model4)[[1]])[, 2, drop = FALSE]
+a$PercntSS <- round(a$Sum.Sq/sum(a$Sum.Sq), 3)
+a
+
+# Effects:
+effects3 <- coef(model4)
+effects3
+```
+
+- We can observe that the factors A, D, and E have a statistically significant affect on the response of this experiment. Their interactions between one another such as AD and DE show a statisticalyl significant affect on the response of this experiment also. 
+
+## b. Analyze the residuals from this experiment. Are there any indications of model inadequacy or violations of the assumptions? (SKIP)
+
+## c. One of the factors from this experiment does not seem to be important. If you drop this factor, what type of design remains? Analyze the data using the full factorial model for only the four active factors. Compare your results with those obtained in part (a).
+```{r}
+model4_reduced <- aov(y ~ factor(A) * factor(B) * factor(D) * factor(E), data = experiment_data)
+summary(model4_reduced)
+```
+
+- By reducing the model by removing factor C, it can be observed that the most significant factors are A, D, and E. The type of design goes from $2^5$ to $2^4$ factorial design. Additionally, it remains that the interaction factors of AD and DE remain the most statistically significant amongst the interaction factors. 
+
+## d. Find settings of the active factors that maximize the predicted response. (Answer based on the cube plot)
+```{r}
+effects3_reduced <- coef(model4_reduced)
+effects3_reduced
+
+A <- experiment_data$A
+B <- experiment_data$B
+D <- experiment_data$D
+E <- experiment_data$E
+
+cubePlot(y, A, B, E)
+cubePlot(y, A, D, E)
+cubePlot(y, A, B, D)
+cubePlot(y, B, D, E)
+```
+
+- It can be observed from the four different cube plots that the combination of interaction factors of **ADE** results in the largest predicted response out of the different interaction factor combinations. 
+
+
+
