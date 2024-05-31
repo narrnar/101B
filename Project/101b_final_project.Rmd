@@ -15,12 +15,16 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 ```{r}
 library(ggplot2)
 library(readxl)
+library(DescTools)
+library(agricolae)
 ```
 
 
 # Read in Data(make sure working directory is correct):
 ```{r}
 data <- read_excel("project.xlsx")
+# data <- read.csv("project.csv")
+head(data)
 ```
 
 # Create Model:
@@ -28,25 +32,140 @@ data <- read_excel("project.xlsx")
 # Define response variable, treatments, and blocks
 response <- data$`Change in Blood Adrenaline Levels`
 treatments <- as.factor(data$`Time Jumped (sec)`) 
-blocks <- data$`Participant Name`
+age <- (data$Age)
+gender <- (data$Sex)
+head(treatments)
 
 
 # Simple model
-model1 <- with(data, aov(response ~ treatments + blocks))
+model1 <- lm(response ~ treatments + age + gender)
 summary(model1)
+
+# ANOVA
+model1_aov <- aov(response ~ treatments + age + gender)
+summary(model1_aov)
+
+coef(model1_aov)
+
+# Model Equation
+
+# Model without factor
+treatments_nofac <- data$`Time Jumped (sec)`
+model1_nofac <- lm(response ~ treatments_nofac + age + gender)
+summary(model1_nofac)
+
+# Assuming data has been loaded and the model has been fit as discussed
+# First, fit a model without a baseline to get coefficients for all levels
+model_no_baseline <- lm(response ~ 0 + treatments_nofac + age + gender, data = data)
+
+# Calculate the mean coefficient for treatments
+treatment_coeffs <- coef(model_no_baseline)[grep("treatments", names(coef(model_no_baseline)))]
+mean_treatment_effect <- mean(treatment_coeffs)
+
+# Construct the model equation including the average treatment effect
+model_coeffs <- coef(model_no_baseline)
+coeff_names <- names(model_coeffs)
+
+# Initialize the equation with the intercept (manually calculated or assumed here)
+equation <- "y = 1397.295"
+
+# Add the average treatment effect to the equation
+equation <- sprintf("%s + %.2f*Treatment", equation, mean_treatment_effect)
+
+# Add other coefficients for 'age' and 'gender'
+for (name in coeff_names[!grepl("treatments", coeff_names)]) {
+    sign <- ifelse(model_coeffs[name] >= 0, "+", "-")
+    equation <- sprintf("%s %s %.2f*%s", equation, sign, abs(model_coeffs[name]), name)
+}
+
+# Add the error term
+equation <- sprintf("%s + e", equation)
+
+# Print the simplified equation
+equation
+
 ```
 
-# Plot Model:
+# Plot Models:
 ```{r}
-# Post-hoc analysis
-tukey1 <- TukeyHSD(model, "Jumping Time(seconds)")
-print(tukey1)
+# Basic plots
+plot(model1)
 
-ggplot(data, aes(x=treatments, y=response, group=blocks)) +
-    geom_line(aes(color=blocks)) +  # Line plot if repeated measures
-    geom_point(size=3, aes(shape=blocks, color=blocks)) +  # Points to show individual measurements
-    labs(title="Change in Blood Adrenaline Levels by Jumping Time", x="Jumping Time (sec)", y="Change in Adrenaline Levels") +
-    theme_minimal(
+# Post-hoc test
+tukey1 <- TukeyHSD(model1_aov, "treatments")
+tukey1
+
+posthoc_lsd <- LSD.test(model1_aov, "treatments", p.adj = "none")
+posthoc_lsd
+```
+
+
+# Other Plots:
+```{r}
+# Calculate means and confidence intervals for plotting
+treatment_means <- aggregate(response ~ treatments, data = data, mean)
+treatment_se <- aggregate(response ~ treatments, data = data, function(x) sd(x) / sqrt(length(x)))
+
+# Merge means and standard errors for plotting
+plot_data <- merge(treatment_means, treatment_se, by = "treatments")
+names(plot_data) <- c("treatments", "mean", "se")
+
+# Bar Graph Plot for each level of treatment
+ggplot(plot_data, aes(x=treatments, y=mean, fill=treatments)) +
+  geom_bar(stat="identity", position=position_dodge(), color="black") +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
+  labs(title="Effect of Jumping Time on Blood Adrenaline Levels", x="Jumping Time (seconds)", y="Mean Change in Blood Adrenaline Levels") +
+  theme_minimal()
+
+# Boxplot
+ggplot(data, aes(y=factor(treatments), x=response, fill=factor(treatments))) +
+  geom_boxplot() +
+  labs(title="Adrenaline Level Changes Across Jumping Times", y="Jumping Time (seconds)", x="Change in Blood Adrenaline Levels") +
+  theme_minimal()
+```
+
+
+
+```{r}
+a <- read.csv("project.csv")
+head(a)
+
+age <- as.factor(a$Age)
+gender <- as.factor(a$Sex)
+response <- a$Post.Jump.Adrenaline..pg.mL.
+treatments <- as.factor(a$Time.Jumped..sec.)
+
+model2 <- aov(response ~ treatments + age + gender)
+summary(model2)
+
+par(mfrow=c(1,2))
+plot(model2$fitted.values, model2$residuals)
+
+qqnorm(model2$residuals)
+qqline(model2$residuals)
+
+PostHocTest(model2, method = "lsd")
+TukeyHSD(model2)
+
+treatment_means <- aggregate(response ~ treatments, data = a, mean)
+treatment_se <- aggregate(response ~ treatments, data = a, function(x) sd(x) / sqrt(length(x)))
+
+# Merge means and standard errors for plotting
+plot_data <- merge(treatment_means, treatment_se, by = "treatments")
+names(plot_data) <- c("treatments", "mean", "se")
+
+# Bar Graph Plot for each level of treatment
+ggplot(plot_data, aes(x=treatments, y=mean, fill=treatments)) +
+  geom_bar(stat="identity", position=position_dodge(), color="black") +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
+  labs(title="Effect of Jumping Time on Blood Adrenaline Levels", x="Jumping Time (seconds)", y="Mean Change in Blood Adrenaline Levels") +
+  theme_minimal()
+
+# Boxplot
+ggplot(data, aes(y=factor(treatments), x=response, fill=factor(treatments))) +
+  geom_boxplot() +
+  labs(title="Adrenaline Level Changes Across Jumping Times", y="Jumping Time (seconds)", x="Change in Blood Adrenaline Levels") +
+  theme_minimal()
 ```
 
 
